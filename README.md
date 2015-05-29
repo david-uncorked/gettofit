@@ -23,3 +23,9 @@ This repo is a first pass at the most basic operation needed to solve the proble
 * [Uncorked Sudios Wearables Report](http://wearables.uncorkedstudios.com/)
 
 * [GetToFit in the wild](https://utopian-outlook-92922.appspot.com)
+
+## Roadmap
+* Workout Support
+* Better error handling
+* Proper Google OAuth for AppEngine
+* and/or less reliance on AppEngine
