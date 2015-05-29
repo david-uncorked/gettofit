@@ -21,3 +21,5 @@ This repo is a first pass at the most basic operation needed to solve the proble
 * [GetToFit Blog Post](http://www.uncorkedstudios.com/) //to come
 
 * [Uncorked Sudios Wearables Report](http://wearables.uncorkedstudios.com/)
+
+* [GetToFit in the wild](https://utopian-outlook-92922.appspot.com)
