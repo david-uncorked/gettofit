@@ -1,0 +1,4 @@
+fit_datasource_template='{"dataStreamName":"getToFitDataStream","name":"","type":"derived","application":{"detailsUrl":"<YOURS>","name":"GetToFit","version":".1"},"dataType":{"field":[{"name":"steps","format":"integer"}],"name":"com.google.step_count.delta"},"device":{"manufacturer":"Uncorked Studios","model":"GetToFit","type":"watch","uid":"1000001","version":"1.0"}}'
+fit_dataset_meta_template='{"dataSourceId":"","maxEndTimeNs": 0,"minStartTimeNs": 0,"point": []}'
+fit_dataset_point_template='{"dataTypeName": "com.google.step_count.delta","endTimeNanos": 0,"originDataSourceId": "","startTimeNanos": 0,"value": [{"intVal": 0}]}'
+fit_session_template='{"id": "","name": "GetToFit Resolved Steps","description": "Steps provided from Up","startTimeMillis": 0,"endTimeMillis": 0,"application": {"name": "GetToFit","version": ".1"},"activityType": 7}'

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="UTF-8">
+
+      <meta name="robots" content="noindex">
+
+    <title>Get To Fit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link rel="stylesheet" href="//storage.googleapis.com/uptofit-dev/normalize.css">
+    <link rel="stylesheet" href="//storage.googleapis.com/uptofit-dev/style.css">
+
+    
+    
+    
+  </head>
+
+  <body>
+
+    <div id="wrapper">
+  <img id="logo" src="http://storage.googleapis.com/uptofit-dev/fit_512x512.png" alt="Logo" />
+   {% if current_user.is_authenticated() %}
+      <div class="intro">
+          <p>Hi, {{ current_user.nickname }}! Thanks for trying out Get To Fit</p>
+	  </div>
+      {% if not current_user.has_jawbone_auth() %}
+	  <ul>
+	      <li class="button active"><a href="{{ url_for('oauth_authorize', provider='jawbone') }}"><span>2</span> Authorize Jawbone</a></li>
+	  </ul>
+      {% else %}
+	  <ul>
+	      <li class="button active"><a href="{{ url_for('logout') }}"><span></span> Logout</a></li>
+	  </ul>
+	  {% endif %}
+  {% else %}
+	 <div class="intro">
+	    <p>Get to Fit! You're just a few steps away from being sync'ed</p>
+	  </div>
+	  <ul>
+	      <li class="button active"><a href="{{ url_for('oauth_authorize', provider='google') }}"><span>1</span> Authorize Google Fit</a></li>
+	  </ul>
+  {% endif %}
+
+  <br/><br/>
+  	<div style="font-size:10px;color:#424242;">UP is a registered trademark of Jawbone. This Application is intended for use with the UP platform. This Application is not offered by Jawbone and Jawbone does not service or warrant this Application.</div>
+
+</div>
+    
+    
+    
+    
+    
+  </body>
+</html>
