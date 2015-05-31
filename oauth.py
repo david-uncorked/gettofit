@@ -132,7 +132,7 @@ class GoogleSignIn(OAuthProvider):
 #        logging.info(str(datasource_id))
         for key, value in iter(sorted(moves.iteritems())):
             point_temp = json.loads(fit_dataset_point_template)
-            end_nanos=long(key) + 3600000
+            end_nanos=long(key) + 3600000000000
             point_temp['endTimeNanos']=end_nanos
             point_temp['startTimeNanos']=key
             if not min_nanos:

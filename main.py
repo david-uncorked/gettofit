@@ -160,15 +160,6 @@ def oauth_callback():
     login_user(user, True)
     return redirect(url_for('index'))
 
-@app.route('/testmoves/')
-def test_moves():
-    if current_user.is_anonymous():
-        return redirect(url_for('index'))
-    oauth = OAuthProvider.get_provider('jawbone')
-    moves = oauth.get_one_move(current_user.jawbone_token, 'bR4HNxIzloGgjkAmyriOe_miE7scp994')
-    return json.dumps(moves)
-
-
 if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)
