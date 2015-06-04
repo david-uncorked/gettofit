@@ -97,24 +97,70 @@ def oauth_jawbone_callback():
 
 @app.route('/update/jawbone', methods=['POST', 'GET'])
 def jawbone_updater():
-#    logging.info(request.data)
-    return "ERROR", 500
+    try: 
+       requestbody = request.data
+    except Exception, e:
+       return "Error", 500
+
+    notifications = json.loads(requestbody)
+    if not notifications.has_key('events'):
+       return "Fail", 500
+
+    events = notifications["events"]
+    respstring = ""
+    for val in events:
+        if not val.has_key('user_xid'):
+           return "Fail", 500
+        if not val.has_key('type'):
+           return "Fail", 500
+        if not val.has_key('event_xid'):
+           return "Fail", 500
+
+        user_xid = val["user_xid"]
+        user = User.query.filter_by(jawbone_id=user_xid).first()
+        if user is None:
+            return "FAIL", 404
+
+        action_type = val["type"]
+        if action_type is not None:
+           if action_type == "move":
+               #this is a move event, so lets resovle it
+               move_xid = val["event_xid"]
+               jawbone_oauth = OAuthProvider.get_provider('jawbone')
+               google_oauth = OAuthProvider.get_provider('google')
+               moves = jawbone_oauth.get_one_move(user.jawbone_token, move_xid)
+               if moves is None:
+                  return "FAILED", 404
+               google_oauth.send_moves_to_fit(moves, user.fit_datasource_id, user.google_refresh_token, user.google_token)
+           if action_type == "user_data_deletion":
+               #delete user data
+               db.session.delete(user)
+               db.session.commit()
+    return respstring, 200
+
 
 @app.route('/update/xid/jawbone/<jbid>', methods=['POST', 'GET'])
 def jawbone_update(jbid):
     if jbid is not None:
         user = User.query.filter_by(jawbone_id=jbid).first()
-#        logging.info(request.data)
         try: 
            requestbody = request.data
         except Exception, e:
            return "Error", 500
-#        logging.info(requestbody)
+
         notifications = json.loads(requestbody)
-#        logging.info(notifications)
+        if not notifications.has_key('events'):
+           return "Fail", 500
         events = notifications["events"]
         respstring = ""
         for val in events:
+            if not val.has_key('user_xid'):
+               return "Fail", 500
+            if not val.has_key('type'):
+               return "Fail", 500
+            if not val.has_key('event_xid'):
+               return "Fail", 500
+
             user_xid = val["user_xid"]
             action_type = val["type"]
             if action_type is not None:
@@ -126,14 +172,14 @@ def jawbone_update(jbid):
                    jawbone_oauth = OAuthProvider.get_provider('jawbone')
                    google_oauth = OAuthProvider.get_provider('google')
                    moves = jawbone_oauth.get_one_move(user.jawbone_token, move_xid)
+                   if moves is None:
+                      return "FAILED", 404
                    google_oauth.send_moves_to_fit(moves, user.fit_datasource_id, user.google_refresh_token, user.google_token)
                if action_type == "user_data_deletion":
                    #delete user data
                    db.session.delete(user)
                    db.session.commit()
-#                   logging.info("User Disconnected " + user_xid)
                    return "OK", 200
-#        logging.info(notifications)
         return respstring, 200
     else:
         return "Fail", 404
