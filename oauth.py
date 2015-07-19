@@ -1,9 +1,10 @@
 from rauth import OAuth1Service, OAuth2Service
 from flask import current_app, url_for, request, redirect, session
-from fit_templates import fit_datasource_template, fit_dataset_meta_template, fit_dataset_point_template, fit_session_template
+from fit_templates import fit_datasource_template, fit_dataset_meta_template, fit_dataset_point_template, fit_session_template, fit_workout_template, fit_activity_segment_meta_template, fit_activity_segment_point_template, fit_raw_datasource_template
 import urllib2
 import json
 import logging
+
 from random import randint
 
 def random_with_N_digits(n):
@@ -64,7 +65,6 @@ class GoogleSignIn(OAuthProvider):
             'refresh_token': refresh_token}
         )
         oauth_session_json = oauth_session_data.json()
-#        logging.info(oauth_session_data.text)
         if 'access_token' not in oauth_session_json:
             return None
         token = oauth_session_json['access_token']
@@ -72,8 +72,7 @@ class GoogleSignIn(OAuthProvider):
 
 
     def get_callback_url(self):
-        return url_for('oauth_callback',
-                       _external=True)
+        return url_for('oauth_callback', _external=True)
 
     def authorize(self):
         return redirect(self.service.get_authorize_url(
@@ -98,8 +97,7 @@ class GoogleSignIn(OAuthProvider):
         if 'refresh_token' not in oauth_session_json:
             refresh_token = None
         else:
-	        refresh_token = oauth_session_json['refresh_token']
-
+            refresh_token = oauth_session_json['refresh_token']
 
         oauth_session = self.service.get_session(token)
 
@@ -109,6 +107,19 @@ class GoogleSignIn(OAuthProvider):
                 me['email'],
                 oauth_session.access_token,
                 refresh_token)
+
+    def setup_raw_datasource(self, refresh_token, access_token):
+        new_access_token = self.refresh(refresh_token)
+        if new_access_token:
+           access_token = new_access_token
+        ds_temp = json.loads(fit_raw_datasource_template)
+        ds_temp['device']['uid'] = str(random_with_N_digits(5))
+        oauth_session = self.service.get_session(access_token)
+        headers = {'Content-Type': 'application/json'}
+        result = oauth_session.post("https://www.googleapis.com/fitness/v1/users/me/dataSources", json.dumps(ds_temp), headers=headers).json()
+        logging.info(result)
+        return (access_token, result['dataStreamId'])
+
 
     def setup_datasource(self, refresh_token, access_token):
         new_access_token = self.refresh(refresh_token)
@@ -129,7 +140,6 @@ class GoogleSignIn(OAuthProvider):
         sessions = dict()
         min_nanos = None
         max_nanos = 0
-#        logging.info(str(datasource_id))
         for key, value in iter(sorted(moves.iteritems())):
             point_temp = json.loads(fit_dataset_point_template)
             end_nanos=long(key) + 3600000000000
@@ -158,12 +168,50 @@ class GoogleSignIn(OAuthProvider):
         patchurl = 'https://www.googleapis.com/fitness/v1/users/me/dataSources/' + datasource_id + '/datasets/' + str(min_nanos) + '-' + str(max_nanos)
         headers = {'Content-Type': 'application/json'}
         result = oauth_session.patch(patchurl, json.dumps(ds_temp), headers=headers)
-#        logging.info(result.text)
 
         for key, value in sessions.iteritems():
             puturl = 'https://www.googleapis.com/fitness/v1/users/me/sessions/' + key
             result = oauth_session.put(puturl, json.dumps(value), headers=headers)
-#            logging.info(result.text)
         return "Complete " + str(result)
 
+    def send_workout_to_fit(self, move_xid, datasource_id, time_created, time_completed, time_updated, workout_type, title, refresh_token, access_token):
+        new_access_token = self.refresh(refresh_token)
+        if new_access_token:
+           access_token = new_access_token
+        workout_temp = json.loads(fit_workout_template)
+
+        session_id= "get-to-fit-workout-" + str(move_xid) + "-" + str(random_with_N_digits(5))
+        time_created_ns = time_created*1000000
+        time_completed_ns = time_completed*1000000
+        workout_temp['id'] = session_id
+        workout_temp['startTimeMillis'] = time_created
+        workout_temp['endTimeMillis'] = time_completed
+        workout_temp['modifiedTimeMillis'] = time_updated
+        workout_temp['name'] = title
+        workout_temp['activityType'] = workout_type
+
+        oauth_session = self.service.get_session(access_token)
+        headers = {'Content-Type': 'application/json'}
+
+        puturl = 'https://www.googleapis.com/fitness/v1/users/me/sessions/' + session_id
+        result = oauth_session.put(puturl, json.dumps(workout_temp), headers=headers)
+
+        # Add activity Segment
+        patchurl = 'https://www.googleapis.com/fitness/v1/users/me/dataSources/' + datasource_id + '/datasets/' + str(time_created_ns) + '-' + str(time_completed_ns)
+        #Populate template for wrapper
+        point_temp = json.loads(fit_activity_segment_point_template)
+        point_temp['value'][0]['intVal']=workout_type
+        point_temp['startTimeNanos']=time_created_ns
+        point_temp['endTimeNanos']=time_completed_ns
+
+        as_temp = json.loads(fit_activity_segment_meta_template)
+        as_temp["point"].append(point_temp)
+        as_temp['minStartTimeNs'] = time_created_ns
+        as_temp['maxEndTimeNs'] = time_completed_ns
+        as_temp['dataSourceId'] = datasource_id
+
+        logging.info(json.dumps(as_temp))
+        result = oauth_session.patch(patchurl, json.dumps(as_temp), headers=headers)
+
+        return result.content
 
