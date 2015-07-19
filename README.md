@@ -25,7 +25,7 @@ This repo is a first pass at the most basic operation needed to solve the proble
 * [GetToFit in the wild](https://utopian-outlook-92922.appspot.com)
 
 ## Roadmap
-* Workout Support
+* ~~Workout Support~~ (In Testing as of 7/19/15)
 * Better error handling
 * Proper Google OAuth for AppEngine
 * and/or less reliance on AppEngine
