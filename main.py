@@ -198,23 +198,23 @@ def jawbone_update(jbid):
                    if moves is None:
                       return "FAILED", 404
                    google_oauth.send_moves_to_fit(moves, user.fit_datasource_id, user.google_refresh_token, user.google_token)
-           if action_type == "workout":
-               action = val["action"]
-               if action == "creation":
-                  #we don't care about creation events
-                  return "OK", 200
+               if action_type == "workout":
+                   action = val["action"]
+                   if action == "creation":
+                      #we don't care about creation events
+                      return "OK", 200
 
-               workout_xid = val["event_xid"]
-               jawbone_oauth = OAuthProvider.get_provider('jawbone')
-               google_oauth = OAuthProvider.get_provider('google')
-               workout_info = jawbone_oauth.get_one_workout(user.jawbone_token, workout_xid)
-               fit_workout_data = up_to_fit_workout_map[str(workout_info["sub_type"])]
+                   workout_xid = val["event_xid"]
+                   jawbone_oauth = OAuthProvider.get_provider('jawbone')
+                   google_oauth = OAuthProvider.get_provider('google')
+                   workout_info = jawbone_oauth.get_one_workout(user.jawbone_token, workout_xid)
+                   fit_workout_data = up_to_fit_workout_map[str(workout_info["sub_type"])]
 
-               moves = google_oauth.send_workout_to_fit(workout_xid, user.fit_raw_datasource_id,
-                                                          workout_info["time_created"], workout_info["time_completed"], 
-                                                          workout_info["time_updated"], fit_workout_data[1], 
-                                                          fit_workout_data[0],  
-                                                          user.google_refresh_token, user.google_token)
+                   moves = google_oauth.send_workout_to_fit(workout_xid, user.fit_raw_datasource_id,
+                                                              workout_info["time_created"], workout_info["time_completed"], 
+                                                              workout_info["time_updated"], fit_workout_data[1], 
+                                                              fit_workout_data[0],  
+                                                              user.google_refresh_token, user.google_token)
 
                if action_type == "user_data_deletion":
                    #delete user data
