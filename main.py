@@ -119,6 +119,7 @@ def jawbone_updater():
            return "Fail", 500
 
         user_xid = val["user_xid"]
+        logging.info(user_xid)
         user = User.query.filter_by(jawbone_id=user_xid).first()
         if user is None:
             return "FAIL", 404
@@ -146,11 +147,11 @@ def jawbone_updater():
                workout_info = jawbone_oauth.get_one_workout(user.jawbone_token, workout_xid)
                fit_workout_data = up_to_fit_workout_map[str(workout_info["sub_type"])]
 
-               moves = google_oauth.send_workout_to_fit(workout_xid, current_user.fit_raw_datasource_id,
+               moves = google_oauth.send_workout_to_fit(workout_xid, user.fit_raw_datasource_id,
                                                           workout_info["time_created"], workout_info["time_completed"], 
                                                           workout_info["time_updated"], fit_workout_data[1], 
                                                           fit_workout_data[0],  
-                                                          current_user.google_refresh_token, current_user.google_token)
+                                                          user.google_refresh_token, user.google_token)
 
            if action_type == "user_data_deletion":
                #delete user data
@@ -170,6 +171,7 @@ def jawbone_update(jbid):
            return "Error", 500
 
         notifications = json.loads(requestbody)
+        logging.info(requestbody)
         if not notifications.has_key('events'):
            return "Fail", 500
         events = notifications["events"]
@@ -196,6 +198,24 @@ def jawbone_update(jbid):
                    if moves is None:
                       return "FAILED", 404
                    google_oauth.send_moves_to_fit(moves, user.fit_datasource_id, user.google_refresh_token, user.google_token)
+           if action_type == "workout":
+               action = val["action"]
+               if action == "creation":
+                  #we don't care about creation events
+                  return "OK", 200
+
+               workout_xid = val["event_xid"]
+               jawbone_oauth = OAuthProvider.get_provider('jawbone')
+               google_oauth = OAuthProvider.get_provider('google')
+               workout_info = jawbone_oauth.get_one_workout(user.jawbone_token, workout_xid)
+               fit_workout_data = up_to_fit_workout_map[str(workout_info["sub_type"])]
+
+               moves = google_oauth.send_workout_to_fit(workout_xid, user.fit_raw_datasource_id,
+                                                          workout_info["time_created"], workout_info["time_completed"], 
+                                                          workout_info["time_updated"], fit_workout_data[1], 
+                                                          fit_workout_data[0],  
+                                                          user.google_refresh_token, user.google_token)
+
                if action_type == "user_data_deletion":
                    #delete user data
                    db.session.delete(user)
@@ -226,6 +246,7 @@ def oauth_callback():
         db.session.commit()
     login_user(user, True)
     return redirect(url_for('index'))
+
 
 if __name__ == '__main__':
     db.create_all()
